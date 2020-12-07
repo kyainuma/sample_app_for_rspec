@@ -1,9 +1,9 @@
 FactoryBot.define do
   factory :task do
     title { 'test' }
-    content { 'test' }
-    status { 0 }
+    content { 'content' }
+    status { :todo }
     deadline { Date.today }   
-    user
+    association :user
   end
 end
