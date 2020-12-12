@@ -101,6 +101,14 @@ RSpec.describe User, type: :system do
           expect(page).to have_content 'Email has already been taken'
         end
       end
+
+      context '他ユーザーの編集ページにアクセスする' do
+        it '編集ページへのアクセスが失敗する' do
+          visit edit_user_path(other_user)
+          expect(current_path).to eq user_path(user)
+          expect(page).to have_content 'Forbidden access.'
+        end
+      end
     end
   end
 end
