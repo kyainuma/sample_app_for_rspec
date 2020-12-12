@@ -89,6 +89,18 @@ RSpec.describe User, type: :system do
           expect(page).to have_content "Email can't be blank"
         end
       end
+
+      context '登録済みのメールアドレスを使用' do
+        it 'ユーザーの編集が失敗する' do
+          visit edit_user_path(user)
+          fill_in 'Email', with: other_user.email
+          fill_in 'Password', with: 'test'
+          fill_in 'Password confirmation', with: 'test'
+          click_button 'Update'
+          expect(current_path).to eq user_path(user)
+          expect(page).to have_content 'Email has already been taken'
+        end
+      end
     end
   end
 end
