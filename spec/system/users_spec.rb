@@ -110,5 +110,16 @@ RSpec.describe User, type: :system do
         end
       end
     end
+
+    describe 'マイページ' do
+      context 'タスクを作成' do
+        it '新規作成したタスクが表示される' do
+          task = create(:task)
+          visit tasks_path
+          expect(current_path).to eq tasks_path
+          expect(page).to have_content 'content'
+        end
+      end
+    end
   end
 end
