@@ -2,13 +2,13 @@ require 'rails_helper'
 
 RSpec.describe User, type: :system do
   let(:user) { create(:user) }
-  let(:other_user) { create(:user) }
-  describe 'ログイン前' do
+
+describe 'ログイン前' do
     describe 'ユーザー新規作成' do
       context 'フォームの入力値が正常' do
         it 'ユーザーの新規作成が完了する' do
           # ユーザー新規作成画面を開く
-          visit sign_up_path
+          visit new_user_path
           
           # Emailテキストフィールドにtest@example.comと入力
           fill_in 'Email', with: 'test@example.com'
@@ -29,26 +29,32 @@ RSpec.describe User, type: :system do
           expect(page).to have_content 'User was successfully created.'
         end  
       end
+
       context 'メールアドレスが未入力' do
         it 'ユーザーの新規作成が失敗する' do
-          visit sign_up_path
+          visit new_user_path
           fill_in 'Email', with: ''
           fill_in 'Password', with: 'password'
           fill_in 'Password confirmation', with: 'password'
           click_button 'SignUp'
           expect(current_path).to eq users_path
+          expect(page).to have_content '1 error prohibited this user from being saved'
           expect(page).to have_content "Email can't be blank"
         end
       end
+
       context '登録済みのメールアドレスを使用' do
         it 'ユーザーの新規作成が失敗する' do
-          visit sign_up_path
-          fill_in 'Email', with: user.email
+          existed_user = create(:user)
+          visit new_user_path
+          fill_in 'Email', with: existed_user.email
           fill_in 'Password', with: 'password'
           fill_in 'Password confirmation', with: 'password'
           click_button 'SignUp'
           expect(current_path).to eq users_path
+          expect(page).to have_content '1 error prohibited this user from being saved'
           expect(page).to have_content "Email has already been taken"
+          expect(page).to have_field 'Email', with: existed_user.email
         end
       end
     end
@@ -65,6 +71,7 @@ RSpec.describe User, type: :system do
 
   describe 'ログイン後' do
     before { login(user) }
+
     describe 'ユーザー編集' do
       context 'フォームの入力値が正常' do
         it 'ユーザーの編集が成功する' do
@@ -87,23 +94,27 @@ RSpec.describe User, type: :system do
           click_button 'Update'
           expect(current_path).to eq user_path(user)
           expect(page).to have_content "Email can't be blank"
+          expect(page).to have_content('1 error prohibited this user from being saved')
         end
       end
 
       context '登録済みのメールアドレスを使用' do
         it 'ユーザーの編集が失敗する' do
           visit edit_user_path(user)
+          other_user = create(:user)
           fill_in 'Email', with: other_user.email
           fill_in 'Password', with: 'test'
           fill_in 'Password confirmation', with: 'test'
           click_button 'Update'
           expect(current_path).to eq user_path(user)
           expect(page).to have_content 'Email has already been taken'
+          expect(page).to have_content('1 error prohibited this user from being saved')
         end
       end
 
       context '他ユーザーの編集ページにアクセスする' do
         it '編集ページへのアクセスが失敗する' do
+          other_user = create(:user)
           visit edit_user_path(other_user)
           expect(current_path).to eq user_path(user)
           expect(page).to have_content 'Forbidden access.'
@@ -114,15 +125,14 @@ RSpec.describe User, type: :system do
     describe 'マイページ' do
       context 'タスクを作成' do
         it '新規作成したタスクが表示される' do
-          visit new_task_path
-          fill_in 'Title', with: 'test'
-          fill_in 'Content', with: 'test'
-          select 'todo', from: 'Status'
-          fill_in 'Deadline', with: Date.today
-          click_button 'Create Task'
-          expect(current_path).to eq task_path(1)
-          expect(page).to have_content 'Task was successfully created.'
-          expect(page).to have_content 'test'
+          create(:task, title: 'test_title', status: :doing, user: user)
+          visit user_path(user)
+          expect(page).to have_content('You have 1 task.')
+          expect(page).to have_content('test_title')
+          expect(page).to have_content('doing')
+          expect(page).to have_link('Show')
+          expect(page).to have_link('Edit')
+          expect(page).to have_link('Destroy')
         end
       end
     end
